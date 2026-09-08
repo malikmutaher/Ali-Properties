@@ -1,22 +1,28 @@
 import { useState, type FormEvent } from "react";
 import { ArrowUpRight, Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+
+const WHATSAPP_NUMBER = "923008074958";
 
 export function ContactForm({ defaultInterest = "" }: { defaultInterest?: string }) {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
     setStatus("sending");
-    const data = new FormData(event.currentTarget);
-    const { error } = await supabase.from("contact_submissions").insert({
-      name: String(data.get("name") ?? ""), phone: String(data.get("phone") ?? ""),
-      email: String(data.get("email") ?? ""), property_interest: String(data.get("interest") ?? ""),
-      message: String(data.get("message") ?? ""),
-    });
-    setStatus(error ? "error" : "sent");
-    if (!error) event.currentTarget.reset();
+    const data = new FormData(form);
+    const text = [
+      `New enquiry — Ali Properties`,
+      `Name: ${String(data.get("name") ?? "")}`,
+      `Phone: ${String(data.get("phone") ?? "")}`,
+      `Email: ${String(data.get("email") ?? "")}`,
+      `Interest: ${String(data.get("interest") ?? "")}`,
+      `Message: ${String(data.get("message") ?? "")}`,
+    ].join("\n");
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    form.reset();
+    setStatus("sent");
   }
 
   if (status === "sent") return <div className="flex min-h-80 flex-col items-start justify-center border-y border-primary/30"><Check className="mb-6 size-8 text-primary" /><h3 className="text-4xl text-cream">Thank you.</h3><p className="mt-3 text-muted-foreground">Our advisory team will contact you shortly.</p></div>;
